@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  Domain:
+    Type: String
+    Default: www.example.com
+  ValidationDomain:
+    Type: String
+    Default: example.com
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref Domain
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [ 'GET', 'HEAD' ]
+            AllowedOrigins: [ '*' ]
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
+          - 
+            Action:
+              - "s3:GetObject"
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ''
+                -
+                  - 'arn:aws:s3:::'
+                  - !Ref Bucket
+                  - '/*'
+            Principal: '*'
+            # FIXME: Can't get this working with
+            # - CanonicalUser: !Ref UserID
+            # nor
+            # - ...AWS::AccountId...
+
+  BucketLog:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['-', [!Ref Domain, 'logs']]
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref Domain
+      DomainValidationOptions:
+        - DomainName: !Ref Domain
+          ValidationDomain: !Ref ValidationDomain
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: !Ref Domain
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+            DomainName:
+              Fn::Join:
+                - ""
+                - [ !Ref Domain, '.s3-website-', !Ref 'AWS::Region', '.amazonaws.com' ]
+        Enabled: 'true'
+        Comment: !Ref Domain
+        Logging:
+          IncludeCookies: 'false'
+          Bucket: !GetAtt BucketLog.DomainName
+        Aliases:
+          - !Ref Domain
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+          TargetOriginId: !Ref Domain
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: 'true'
+        PriceClass: PriceClass_200
+        ViewerCertificate:
+          AcmCertificateArn: !Ref Certificate
+          SslSupportMethod: 'sni-only'
+
+
