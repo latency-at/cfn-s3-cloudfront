@@ -11,6 +11,6 @@ Beside the stack-name, you need to specify:
 aws --region us-east-1 cloudformation create-stack \
   --stack-name YourStackName \
   --parameters ParameterKey=Domain,ParameterValue=www.example.com \
-  --parameters ParameterKey=ValidationDomain,ParameterValue=example.com \
+    ParameterKey=ValidationDomain,ParameterValue=example.com \
   --template-body "$(cat site.yml)"
 ```
