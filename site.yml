@@ -6,6 +6,9 @@ Parameters:
   ValidationDomain:
     Type: String
     Default: example.com
+  TTL:
+    Type: Number
+    Default: 86400
 
 Resources:
   Bucket:
@@ -83,6 +86,7 @@ Resources:
             - PATCH
             - POST
             - PUT
+          DefaultTTL: !Ref TTL
           TargetOriginId: !Ref Domain
           ForwardedValues:
             QueryString: 'false'
