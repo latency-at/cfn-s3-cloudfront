@@ -9,6 +9,9 @@ Parameters:
   TTL:
     Type: Number
     Default: 86400
+  ViewerProtocolPolicy:
+    Type: String
+    Default: redirect-to-https
 
 Resources:
   Bucket:
@@ -92,7 +95,7 @@ Resources:
             QueryString: 'false'
             Cookies:
               Forward: none
-          ViewerProtocolPolicy: redirect-to-https
+          ViewerProtocolPolicy: !Ref ViewerProtocolPolicy
           Compress: 'true'
         PriceClass: PriceClass_200
         ViewerCertificate:
